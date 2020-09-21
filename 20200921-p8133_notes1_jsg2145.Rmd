@@ -1,0 +1,47 @@
+---
+title: "p8133_notes1_jsg2145"
+author: "Jared Garfinkel"
+date: "9/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(viridis)
+library(haven)
+library(readxl)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	message = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+```{r}
+errorI = vector(mode = "list", length = 100)
+power = vector(mode = "list", length = 100)
+res = vector(mode = "list", length = 100)
+for(i in 1:100) {
+  for(j in 1:i) {
+    errorI[[c(i, j)]] = 1 - pbinom(j-1, i, 0.25)
+    power[[c(i, j)]] = 1 - pbinom(j-1, i, 0.4)
+    res[[c(i, j)]] = bind_cols("i" = i, "j" = j, "errorI" = errorI[[c(i, j)]], "power" = power[[c(i, j)]])
+  }
+  res[[i]] = map(res[[i]], ~bind_rows(.))
+}
+
+res %>% 
+  bind_rows() %>%
+  filter(errorI < 0.05,
+         power > 0.8)
+```
