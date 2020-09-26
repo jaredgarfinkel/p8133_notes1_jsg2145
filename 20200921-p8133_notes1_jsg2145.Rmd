@@ -45,3 +45,104 @@ res %>%
   filter(errorI < 0.05,
          power > 0.8)
 ```
+
+```{r, eval = FALSE}
+stage2errorI = vector(mode = "list", length = 20)
+stage1errorI = vector(mode = "list", length = 20)
+res = vector(mode = "list", length = 20)
+for(i in 1:20) {
+  stage1errorI[[i]] = dbinom(i, 20, .25)
+  for(j in 1:51){
+    stage2errorI[[c(i,j)]] = 1 - pbinom(j-i-1, 71, 0.25)
+    res[[c(i,j)]] = bind_cols("n1_response" = i, "n2_response" = j-i, "stage2errorI" = stage2errorI[[c(i,j)]], "stage1errorI" = stage1errorI[[i]])
+  }
+  res[[i]] = map(res[[i]], ~bind_rows(.))
+}
+
+# head(res)
+
+stage1errorI %>% 
+  unlist() %>% 
+  data.frame()
+
+stage1errorI = bind_rows(stage1errorI)
+
+bind_rows(stage2res) %>% 
+  filter(n1_response > 5,
+         n1_response+n2_response>23,
+         stage2errorI < 0.05,
+         stage2power > 0.8)
+
+dbinom(6, 20, .25)
+dbinom(1, 20, .25)
+dbinom(5, 20, .25)
+```
+
+```{r}
+output = vector(mode = "list", length = 20)
+for (i in 6:20) {
+  for(j in 25:51) {
+    output[[c(i, j)]] = bind_cols("i" = i, "j" = j, "stage1" = (1-pbinom(i-1, 20, .25)), "stage2" = (1-pbinom(j-1, 51, .25)))
+  }
+  output[[i]] = map(output[[i]], ~bind_rows(.))
+}
+
+bind_rows(output) %>% 
+  mutate(n1 = 20,
+         n2 = 51) %>%
+  summarize(expsize1 = stage1*n1,
+            expsize2= sum(stage2*n2)) %>% 
+  distinct() %>% 
+  summarize(expsize = sum(expsize1, expsize2),
+            expsize = sum(expsize))
+
+## 18.23728
+
+
+(1-pbinom(5, 20, .25))*71 + (pbinom(5, 20, .25)*20)
+#39.52419
+```
+
+```{r}
+output = NULL
+for (i in 6:20) {
+  output[[i]] = 1-pbinom(i-1, 20, .25)
+}
+output %>% 
+  tibble() %>% 
+  unnest() %>% 
+  rename("stage1" = ".") %>% 
+  mutate(n = 20,
+         stage2 = 1 - pbinom(25, 51, .25),
+         n2 = 51) %>% 
+  summarize(exp = sum(stage1*n+stage2*n2))
+# 15.22
+
+
+
+```
+
+
+
+Under the null, the chances of fewer than 6 responses is `r pbinom(5, 20, .25)`. The chances of moving to the second stage of the trial is `r 1 - pbinom(5, 20, .25)`.
+
+Since the type I error is the Pr(reject H0 under the null), we say that the type I error of the futility round is .3828. This includes all the responses above 5 responses.
+
+```{r}
+errorI_alt = vector(mode = "list", length = 51)
+power_alt = vector(mode = "list", length = 51)
+res_alt = vector(mode = "list", length = 51)
+for(i in 1:51) {
+  errorI_alt[[i]] = 1 - pbinom(i-1, 51, 0.25)
+  power_alt[[i]] = 1 - pbinom(i-1, 51, 0.4)
+  res_alt[[i]] = bind_cols("i" = i, "errorI" = errorI_alt[[i]], "power" = power_alt[[i]])
+}
+
+bind_rows(res_alt)
+
+```
+
+Since the futility round can include anywhere from 6 to 20 responses, the stage 2 trial can range from 4 to 51 responses to be promising depending on the outcome of the round 1. 
+
+The probability of rejecting the null in stage 2 (given that Sn $\ge$ 6) = `r 1 - pbinom(j-i)
+

@@ -1,0 +1,57 @@
+---
+title: "20200926-notes1_jsg2145"
+author: "Jared Garfinkel"
+date: "9/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(viridis)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	message = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+Pr(reject the null hypothesis in round 2 | reject the null in round 1) = Pr(reject the null in round 2) * Pr(reject the null in round 1) * Pr(reject the null in round 2)/Pr(reject the null in round 1)
+
+Pr(reject the null in round 1 | reject the null in round 2) = Pr(reject the null in round 2 | reject the null in round 1)*Pr(reject the null in round 1)/ Pr(reject the null in round 2)
+
+Assume they are independent, so Pr(reject the null in round 2 | reject the null in round 1) = Pr(reject the null in round 2 \cap reject the null in round 1) = Pr(reject the null in round 2)*Pr(reject the null in round 1)
+
+```{r}
+res = vector(mode = "list", length = 20)
+for(i in 1:20) {
+  for(j in 1:51){
+    res[[c(i,j)]] = bind_cols("n1_response" = i, "n2_response" = j-i)
+  }
+  res[[i]] = map(res[[i]], ~bind_rows(.))
+}
+
+bind_rows(res) %>% 
+  mutate(errorI = dbinom(n2_response, 51, .25) * dbinom(n1_response, 20, .25) * (1 - pbinom(5, 20, .25))/(1 - pbinom(23, 71, .25)),
+         power = dbinom(n2_response, 51, .4) * dbinom(n1_response, 20, .4) * (1 - pbinom(5, 20, .4))/(1 - pbinom(23, 71, .4))) %>% 
+  filter(n1_response > 5,
+         n1_response + n2_response > 23) %>% 
+  summarize(sum_error = sum(errorI),
+            sum_power = sum(power))
+
+```
+
+```{r}
+
+```
+
+
