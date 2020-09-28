@@ -42,8 +42,8 @@ for(i in 1:100) {
 
 res %>% 
   bind_rows() %>%
-  filter(errorI < 0.05,
-         power > 0.8)
+  filter(errorI < 0.0489,
+         power > 0.803)
 ```
 
 ```{r, eval = FALSE}

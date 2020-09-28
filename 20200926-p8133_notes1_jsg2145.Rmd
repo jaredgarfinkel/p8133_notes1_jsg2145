@@ -51,7 +51,15 @@ bind_rows(res) %>%
 ```
 
 ```{r}
+bind_rows(res) %>% 
+  mutate(errorI = dbinom(n1_response, 20, .25) * dbinom(n2_response, 51, .25),
+         power = dbinom(n1_response, 20, .4) * dbinom(n2_response, 51, .4)) %>%
+  filter(n1_response > 5,
+         n1_response + n2_response > 23) %>% 
+  summarize(sum_error = sum(errorI),
+            sum_power = sum(power))
 
+20*pbinom(5, 20, .25) + 71*(1-pbinom(5, 20, .25))
 ```
 
 
